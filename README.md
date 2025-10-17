@@ -1,0 +1,149 @@
+[index.html](https://github.com/user-attachments/files/22961669/index.html)
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>مترجم متعدد اللغات — Hindi, English, Arabic</title>
+  <style>
+    body { font-family: "Cairo", sans-serif; background:#f6f7fb; color:#222; padding:20px; direction:rtl; }
+    .card { max-width:900px; margin:12px auto; background:white; border-radius:10px; padding:18px; box-shadow:0 6px 18px rgba(20,20,60,0.06); }
+    h1{ margin:0 0 8px; color:#0b69ff }
+    label{ display:block; margin:10px 0 6px; font-weight:600 }
+    textarea{ width:100%; min-height:140px; padding:10px; font-size:15px; border-radius:8px; border:1px solid #ddd; resize:vertical }
+    select, button { padding:10px 12px; border-radius:8px; border:1px solid #cfd8e3; background:#fff; font-size:15px }
+    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .controls{ margin-top:12px; display:flex; gap:10px; flex-wrap:wrap }
+    button.primary{ background:#0b69ff; color:white; border:none; }
+    small.note{ color:#666 }
+    .result{ background:#fbfdff; margin-top:12px; padding:12px; border-radius:8px; min-height:120px; border:1px dashed #e0e7ff; white-space:pre-wrap }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>مترجم متعدد اللغات</h1>
+    <p class="note">يدعم لغات هندية شائعة بالإضافة إلى الإنجليزية والعربية. الاداة تستخدم خدمة ترجمة مفتوحة (LibreTranslate demo).</p>
+
+    <label for="source">من اللغة:</label>
+    <select id="source">
+      <option value="auto">تحديد تلقائي</option>
+      <option value="en">الإنجليزية (English)</option>
+      <option value="ar">العربية (Arabic)</option>
+      <option value="hi">الهندية (Hindi)</option>
+      <option value="bn">البنغالية (Bengali)</option>
+      <option value="ta">التاميل (Tamil)</option>
+      <option value="te">التيلجو (Telugu)</option>
+      <option value="mr">الماراثي (Marathi)</option>
+      <option value="ur">الأردية (Urdu)</option>
+      <option value="gu">الجوجاراتية (Gujarati)</option>
+      <option value="kn">الكانادا (Kannada)</option>
+      <option value="ml">المالايالامية (Malayalam)</option>
+      <option value="pa">البنجابية (Punjabi)</option>
+    </select>
+
+    <label for="target">إلى اللغة:</label>
+    <select id="target">
+      <option value="en">الإنجليزية (English)</option>
+      <option value="ar">العربية (Arabic)</option>
+      <option value="hi">الهندية (Hindi)</option>
+      <option value="bn">البنغالية (Bengali)</option>
+      <option value="ta">التاميل (Tamil)</option>
+      <option value="te">التيلجو (Telugu)</option>
+      <option value="mr">الماراثي (Marathi)</option>
+      <option value="ur">الأردية (Urdu)</option>
+      <option value="gu">الجوجاراتية (Gujarati)</option>
+      <option value="kn">الكانادا (Kannada)</option>
+      <option value="ml">المالايالامية (Malayalam)</option>
+      <option value="pa">البنجابية (Punjabi)</option>
+    </select>
+
+    <label for="input">النص:</label>
+    <textarea id="input" placeholder="ألصق أو اكتب النص هنا..."></textarea>
+
+    <div class="controls">
+      <button class="primary" id="translateBtn">ترجمة</button>
+      <button id="swapBtn">تبديل اللغات</button>
+      <button id="clearBtn">مسح</button>
+      <button id="copyBtn">نسخ النتيجة</button>
+      <small class="note" id="status">جاهز للترجمة</small>
+    </div>
+
+    <h3>النتيجة:</h3>
+    <div class="result" id="result" aria-live="polite"></div>
+
+    <p style="margin-top:14px;"><small class="note">ملاحظة: الأداة تستخدم خدمة تجربة عامة — للجودة الأفضل أو الاستخدام التجاري يُستحسن استعمال API مدفوع مثل Google Cloud Translate أو اشتراك LibreTranslate خاص.</small></p>
+  </div>
+
+  <script>
+    const translateBtn = document.getElementById('translateBtn');
+    const inputEl = document.getElementById('input');
+    const resultEl = document.getElementById('result');
+    const sourceEl = document.getElementById('source');
+    const targetEl = document.getElementById('target');
+    const statusEl = document.getElementById('status');
+    const swapBtn = document.getElementById('swapBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const copyBtn = document.getElementById('copyBtn');
+
+    const API_URL = 'https://libretranslate.com/translate'; // تستخدم نسخة تجريبية عامة
+
+    translateBtn.addEventListener('click', async () => {
+      const text = inputEl.value.trim();
+      if(!text){ alert('من فضلك اكتب أو ألصق نصًا للترجمة'); return; }
+
+      const source = sourceEl.value;
+      const target = targetEl.value;
+
+      statusEl.textContent = 'جاري الترجمة...';
+      translateBtn.disabled = true;
+
+      try{
+        const res = await fetch(API_URL, {
+          method:'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ q: text, source: source, target: target, format: "text" })
+        });
+
+        if(!res.ok){
+          throw new Error('خطأ في الاستجابة: ' + res.status);
+        }
+
+        const data = await res.json();
+        // Response عادة: { translatedText: "..." }
+        resultEl.textContent = data.translatedText || 'لم يتم إرجاع نتيجة';
+        statusEl.textContent = 'تمت الترجمة';
+      } catch(err){
+        console.error(err);
+        statusEl.textContent = 'حدث خطأ: ' + (err.message || err);
+        resultEl.textContent = '';
+        alert('فشل الاتصال بخدمة الترجمة. تأكدي من الاتصال بالإنترنت أو استخدمي API مدفوع.');
+      } finally {
+        translateBtn.disabled = false;
+      }
+    });
+
+    swapBtn.addEventListener('click', () => {
+      const s = sourceEl.value;
+      sourceEl.value = targetEl.value;
+      targetEl.value = s;
+    });
+
+    clearBtn.addEventListener('click', () => {
+      inputEl.value = '';
+      resultEl.textContent = '';
+      statusEl.textContent = 'جاهز للترجمة';
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      const txt = resultEl.textContent;
+      if(!txt){ alert('لا توجد نتيجة للنسخ'); return; }
+      try{
+        await navigator.clipboard.writeText(txt);
+        alert('تم نسخ النتيجة');
+      } catch(e){
+        alert('فشل النسخ — يمكنك تحديد النص ونسخه يدوياً');
+      }
+    });
+  </script>
+</body>
+</html>
